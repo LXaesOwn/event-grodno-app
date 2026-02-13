@@ -3,23 +3,20 @@ import {
   View,
   Text,
   StyleSheet,
+  SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootState, AppDispatch } from '@/store/store';
-import { setEvents, setCategory } from '@/store/eventsSlice';
+import { setEvents } from '@/store/eventsSlice';
 import EventCard from '@/components/EventCard';
-import CategoryFilter from '@/components/CategoryFilter';
-import { categories } from '@/utils/constants';
 import { Event } from '@/types/event';
 
-const HomeScreen: React.FC = ({ navigation }: any) => {
+const EventListScreen = ({ navigation }: any) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { filteredEvents } = useSelector((state: RootState) => state.events);
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { events } = useSelector((state: RootState) => state.events);
 
   useEffect(() => {
     loadEvents();
@@ -68,48 +65,70 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         registeredCount: 89,
         isFavorite: true,
         isRegistered: false,
-      }
+      },
+      {
+        id: '3',
+        title: 'Выставка современного искусства',
+        description: 'Работы молодых художников Гродно',
+        category: 'exhibition',
+        date: '2024-12-27',
+        time: '11:00',
+        location: {
+          name: 'Выставочный зал',
+          address: 'ул. Советская, 25',
+          latitude: 53.6770,
+          longitude: 23.8300,
+        },
+        price: 8,
+        imageUrl: 'https://via.placeholder.com/400x200/2E8B57/ffffff?text=Выставка',
+        organizer: 'Галерея "Тизенгауз"',
+        maxParticipants: 100,
+        registeredCount: 34,
+        isFavorite: false,
+        isRegistered: true,
+      },
+      {
+        id: '4',
+        title: 'Спортивный турнир',
+        description: 'Городские соревнования по баскетболу',
+        category: 'sport',
+        date: '2024-12-28',
+        time: '15:00',
+        location: {
+          name: 'Спорткомплекс',
+          address: 'пр. Космонавтов, 50',
+          latitude: 53.6900,
+          longitude: 23.8400,
+        },
+        price: 5,
+        imageUrl: 'https://via.placeholder.com/400x200/E67E22/ffffff?text=Спорт',
+        organizer: 'Спорткомитет',
+        maxParticipants: 300,
+        registeredCount: 156,
+        isFavorite: false,
+        isRegistered: false,
+      },
     ];
 
     dispatch(setEvents(mockEvents));
   };
 
-  const handleCategorySelect = (categoryId: string | null) => {
-    dispatch(setCategory(categoryId));
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Добро пожаловать в Гродно!</Text>
-          <Text style={styles.subtitle}>
-            {user ? `Привет, ${user.name}` : 'Найдите интересные события'}
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Profile')}
-          style={styles.profileButton}
-        >
-          <MaterialIcons name="account-circle" size={40} color="#4A6FA5" />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Все события</Text>
+        <View style={{ width: 24 }} />
       </View>
-
-      <CategoryFilter
-        categories={categories}
-        onSelectCategory={handleCategorySelect}
-      />
-
-      <ScrollView style={styles.eventsList}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Ближайшие события</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Events')}>
-            <Text style={styles.seeAll}>Все</Text>
-          </TouchableOpacity>
-        </View>
-
-        {filteredEvents.length > 0 ? (
-          filteredEvents.map(event => (
+      
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {events.length > 0 ? (
+          events.map((event) => (
             <EventCard
               key={event.id}
               event={event}
@@ -119,8 +138,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
         ) : (
           <View style={styles.emptyState}>
             <MaterialIcons name="event-busy" size={60} color="#ccc" />
-            <Text style={styles.emptyText}>
-              Нет событий в выбранной категории
+            <Text style={styles.emptyTitle}>Событий пока нет</Text>
+            <Text style={styles.emptySubtitle}>
+              Скоро здесь появятся интересные мероприятия
             </Text>
           </View>
         )}
@@ -138,55 +158,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  greeting: {
+  headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  profileButton: {
-    padding: 5,
-  },
-  eventsList: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 15,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  seeAll: {
-    fontSize: 14,
-    color: '#4A6FA5',
     fontWeight: '600',
+    color: '#333',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
+    paddingVertical: 60,
   },
-  emptyText: {
-    fontSize: 16,
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#666',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
     color: '#999',
-    marginTop: 10,
+    textAlign: 'center',
   },
 });
 
-export default HomeScreen;
+export default EventListScreen;

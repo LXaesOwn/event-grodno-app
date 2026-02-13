@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Event } from '../types/event'; 
+import { Event } from '@/types/event';
 
 interface EventsState {
   events: Event[];
@@ -43,7 +43,7 @@ const eventsSlice = createSlice({
     },
     registerForEvent: (state, action: PayloadAction<string>) => {
       const event = state.events.find(e => e.id === action.payload);
-      if (event) {
+      if (event && event.maxParticipants && event.registeredCount < event.maxParticipants) {
         event.isRegistered = true;
         event.registeredCount++;
       }
