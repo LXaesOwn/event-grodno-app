@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Alert,
   Image,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
 
 import * as ImagePicker from 'expo-image-picker';
 import { createEvent } from '@/services/events';
+import { uploadImageToImgBB } from '@/services/imageUpload';
 
 const CreateEventScreen = ({ navigation }: any) => {
   const [title, setTitle] = useState('');
@@ -23,28 +23,27 @@ const CreateEventScreen = ({ navigation }: any) => {
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
   const [price, setPrice] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
   const [maxParticipants, setMaxParticipants] = useState('');
+
+  const [imagePreview, setImagePreview] = useState('');
+  const [imageBase64, setImageBase64] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
 
   const pickImage = async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert(
-        'Информация',
-        'В web-версии используйте ссылку на изображение'
-      );
-      return;
-    }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 0.3,
+      quality: 0.5,
       base64: true,
     });
 
-    if (!result.canceled && result.assets[0].base64) {
-      setImageUrl(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    if (!result.canceled && result.assets[0]) {
+      setImagePreview(result.assets[0].uri);
+
+      if (result.assets[0].base64) {
+        setImageBase64(result.assets[0].base64);
+      }
     }
   };
 
@@ -56,6 +55,13 @@ const CreateEventScreen = ({ navigation }: any) => {
 
     try {
       setIsLoading(true);
+
+      let finalImageUrl =
+        'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&auto=format&fit=crop';
+
+      if (imageBase64) {
+        finalImageUrl = await uploadImageToImgBB(imageBase64);
+      }
 
       await createEvent({
         title,
@@ -70,9 +76,7 @@ const CreateEventScreen = ({ navigation }: any) => {
           longitude: 23.8298,
         },
         price: Number(price) || 0,
-        imageUrl:
-          imageUrl ||
-          'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&auto=format&fit=crop',
+        imageUrl: finalImageUrl,
         organizer: 'Event Grodno',
         maxParticipants: Number(maxParticipants) || 0,
         registeredCount: 0,
@@ -83,10 +87,7 @@ const CreateEventScreen = ({ navigation }: any) => {
       navigation.navigate('Main');
     } catch (error: any) {
       console.log(error);
-      Alert.alert(
-        'Ошибка',
-        error?.message || 'Не удалось создать мероприятие'
-      );
+      Alert.alert('Ошибка', error?.message || 'Не удалось создать мероприятие');
     } finally {
       setIsLoading(false);
     }
@@ -96,88 +97,22 @@ const CreateEventScreen = ({ navigation }: any) => {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Создание мероприятия</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Название"
-        value={title}
-        onChangeText={setTitle}
-      />
+      <TextInput style={styles.input} placeholder="Название" value={title} onChangeText={setTitle} />
+      <TextInput style={styles.input} placeholder="Описание" value={description} onChangeText={setDescription} />
+      <TextInput style={styles.input} placeholder="Категория: concert, film, theater, exhibition, sport" value={category} onChangeText={setCategory} />
+      <TextInput style={styles.input} placeholder="Дата: 2026-08-29" value={date} onChangeText={setDate} />
+      <TextInput style={styles.input} placeholder="Время: 19:00" value={time} onChangeText={setTime} />
+      <TextInput style={styles.input} placeholder="Название места" value={locationName} onChangeText={setLocationName} />
+      <TextInput style={styles.input} placeholder="Адрес" value={address} onChangeText={setAddress} />
+      <TextInput style={styles.input} placeholder="Стоимость" value={price} onChangeText={setPrice} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Максимум участников" value={maxParticipants} onChangeText={setMaxParticipants} keyboardType="numeric" />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Описание"
-        value={description}
-        onChangeText={setDescription}
-      />
+      <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+        <Text style={styles.imageButtonText}>Выбрать картинку</Text>
+      </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Категория: concert, film, theater, exhibition, sport"
-        value={category}
-        onChangeText={setCategory}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Дата: 2026-08-29"
-        value={date}
-        onChangeText={setDate}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Время: 19:00"
-        value={time}
-        onChangeText={setTime}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Название места"
-        value={locationName}
-        onChangeText={setLocationName}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Адрес"
-        value={address}
-        onChangeText={setAddress}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Стоимость"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Максимум участников"
-        value={maxParticipants}
-        onChangeText={setMaxParticipants}
-        keyboardType="numeric"
-      />
-
-      {Platform.OS === 'web' ? (
-        <TextInput
-          style={styles.input}
-          placeholder="Ссылка на изображение https://..."
-          value={imageUrl}
-          onChangeText={setImageUrl}
-        />
-      ) : (
-        <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-          <Text style={styles.imageButtonText}>
-            Выбрать картинку из галереи
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.preview} />
+      {imagePreview ? (
+        <Image source={{ uri: imagePreview }} style={styles.preview} />
       ) : null}
 
       <TouchableOpacity
@@ -196,18 +131,8 @@ const CreateEventScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -215,7 +140,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
-
   imageButton: {
     backgroundColor: '#eee',
     padding: 14,
@@ -223,19 +147,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-
   imageButtonText: {
     color: '#333',
     fontWeight: '600',
   },
-
   preview: {
     width: '100%',
     height: 180,
     borderRadius: 12,
     marginBottom: 12,
   },
-
   button: {
     backgroundColor: '#4A6FA5',
     padding: 16,
@@ -244,12 +165,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 40,
   },
-
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
 });
 
 export default CreateEventScreen;
