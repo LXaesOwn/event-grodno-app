@@ -67,16 +67,14 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
       dispatch(setUser(user));
       dispatch(setToken('firebase-auth'));
 
-      Alert.alert(
-        'Успешно',
-        isLogin ? 'Вы вошли в систему' : 'Регистрация завершена',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.replace('Main'),
-          },
-        ]
-      );
+      navigation.replace('Main');
+
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          'Успешно',
+          isLogin ? 'Вы вошли в систему' : 'Регистрация завершена'
+        );
+      }
     } catch (error: any) {
       console.log(error);
 
@@ -224,29 +222,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
   },
+
   header: {
     alignItems: 'center',
     marginBottom: 40,
   },
+
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
     marginTop: 16,
   },
+
   subtitle: {
     fontSize: 16,
     color: '#666',
     marginTop: 8,
   },
+
   form: {
     width: '100%',
   },
+
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,12 +261,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#f9f9f9',
   },
+
   input: {
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 8,
     fontSize: 16,
   },
+
   authButton: {
     backgroundColor: '#4A6FA5',
     paddingVertical: 16,
@@ -270,15 +276,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
   },
+
   authButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
   },
+
   switchButton: {
     marginTop: 20,
     alignItems: 'center',
   },
+
   switchText: {
     color: '#4A6FA5',
     fontSize: 16,
