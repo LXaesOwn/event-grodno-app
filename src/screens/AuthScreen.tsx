@@ -9,24 +9,41 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+
 import { useDispatch } from 'react-redux';
 import { MaterialIcons } from '@expo/vector-icons';
+
 import { AppDispatch } from '@/store/store';
 import { setUser, setToken } from '@/store/authSlice';
+import {
+  loginUser,
+  registerUser,
+} from '@/services/authService';
 
 const AuthScreen: React.FC = ({ navigation }: any) => {
   const [isLogin, setIsLogin] = useState(true);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const dispatch = useDispatch<AppDispatch>();
 
   const handleAuth = async () => {
     if (!email || !password) {
-      Alert.alert('Ошибка', 'Заполните все обязательные поля');
+      Alert.alert('Ошибка', 'Заполните email и пароль');
+      return;
+    }
+
+    if (!isLogin && !name) {
+      Alert.alert('Ошибка', 'Введите имя пользователя');
       return;
     }
 
@@ -35,34 +52,63 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
       return;
     }
 
+    if (password.length < 6) {
+      Alert.alert('Ошибка', 'Пароль должен быть не менее 6 символов');
+      return;
+    }
+
     try {
-      const mockUser = {
-        id: Date.now().toString(),
-        email,
-        name: isLogin ? email.split('@')[0] : name || 'Пользователь',
-        registeredEvents: [],
-        favoriteEvents: [],
-        notificationsEnabled: true,
-      };
+      setIsLoading(true);
 
-      const mockToken = `mock-jwt-token-${Date.now()}`;
+      const user = isLogin
+        ? await loginUser(email, password)
+        : await registerUser(email, password, name);
 
-      dispatch(setUser(mockUser));
-      dispatch(setToken(mockToken));
+      dispatch(setUser(user));
+      dispatch(setToken('firebase-auth'));
 
       Alert.alert(
         'Успешно',
         isLogin ? 'Вы вошли в систему' : 'Регистрация завершена',
-        [{ 
-          text: 'OK', 
-          onPress: () => {
-            // ✅ ПРАВИЛЬНО: переходим на Main, а не на Home
-            navigation.replace('Main');
-          } 
-        }]
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.replace('Main'),
+          },
+        ]
       );
-    } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось выполнить вход');
+    } catch (error: any) {
+      console.log(error);
+
+      let message = 'Не удалось выполнить действие';
+
+      if (error.code === 'auth/email-already-in-use') {
+        message = 'Пользователь с таким email уже существует';
+      }
+
+      if (error.code === 'auth/invalid-email') {
+        message = 'Некорректный email';
+      }
+
+      if (error.code === 'auth/user-not-found') {
+        message = 'Пользователь не найден';
+      }
+
+      if (error.code === 'auth/wrong-password') {
+        message = 'Неверный пароль';
+      }
+
+      if (error.code === 'auth/invalid-credential') {
+        message = 'Неверный email или пароль';
+      }
+
+      if (error.code === 'auth/weak-password') {
+        message = 'Слишком слабый пароль';
+      }
+
+      Alert.alert('Ошибка', message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -74,7 +120,9 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <MaterialIcons name="event" size={60} color="#4A6FA5" />
+
           <Text style={styles.title}>События Гродно</Text>
+
           <Text style={styles.subtitle}>
             {isLogin ? 'Войдите в аккаунт' : 'Создайте аккаунт'}
           </Text>
@@ -84,6 +132,7 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
           {!isLogin && (
             <View style={styles.inputContainer}>
               <MaterialIcons name="person" size={20} color="#666" />
+
               <TextInput
                 style={styles.input}
                 placeholder="Имя"
@@ -95,6 +144,7 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
 
           <View style={styles.inputContainer}>
             <MaterialIcons name="email" size={20} color="#666" />
+
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -107,6 +157,7 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
 
           <View style={styles.inputContainer}>
             <MaterialIcons name="lock" size={20} color="#666" />
+
             <TextInput
               style={styles.input}
               placeholder="Пароль"
@@ -114,11 +165,12 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
             />
+
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <MaterialIcons 
-                name={showPassword ? 'visibility' : 'visibility-off'} 
-                size={20} 
-                color="#666" 
+              <MaterialIcons
+                name={showPassword ? 'visibility' : 'visibility-off'}
+                size={20}
+                color="#666"
               />
             </TouchableOpacity>
           </View>
@@ -126,6 +178,7 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
           {!isLogin && (
             <View style={styles.inputContainer}>
               <MaterialIcons name="lock" size={20} color="#666" />
+
               <TextInput
                 style={styles.input}
                 placeholder="Подтвердите пароль"
@@ -136,10 +189,18 @@ const AuthScreen: React.FC = ({ navigation }: any) => {
             </View>
           )}
 
-          <TouchableOpacity style={styles.authButton} onPress={handleAuth}>
-            <Text style={styles.authButtonText}>
-              {isLogin ? 'Войти' : 'Зарегистрироваться'}
-            </Text>
+          <TouchableOpacity
+            style={styles.authButton}
+            onPress={handleAuth}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.authButtonText}>
+                {isLogin ? 'Войти' : 'Зарегистрироваться'}
+              </Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity

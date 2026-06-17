@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   selectedItem: {
-    // Этот стиль применяется к TouchableOpacity, оставляем пустым или добавляем нужные стили
+    // Этот стиль применяется к TouchableOpacity
   },
   selectedText: {
     color: '#4A6FA5',

@@ -10,10 +10,10 @@ const api = axios.create({
   },
 });
 
-// Интерцептор для добавления токена
+
 api.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('token'); // Используйте AsyncStorage для React Native
+    const token = localStorage.getItem('token'); 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

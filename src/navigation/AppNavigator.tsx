@@ -9,6 +9,7 @@ import EventListScreen from '@/screens/EventListScreen';
 import EventDetailScreen from '@/screens/EventDetailScreen';
 import AuthScreen from '@/screens/AuthScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
+import CreateEventScreen from '@/screens/CreateEventScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -17,9 +18,9 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof MaterialIcons.glyphMap = 'home';
-          
+
           if (route.name === 'Home') {
             iconName = 'home';
           } else if (route.name === 'Events') {
@@ -27,7 +28,7 @@ function MainTabs() {
           } else if (route.name === 'Profile') {
             iconName = 'person';
           }
-          
+
           return <MaterialIcons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#4A6FA5',
@@ -35,20 +36,22 @@ function MainTabs() {
         headerShown: true,
       })}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={HomeScreen} 
-        options={{ title: 'Главная' }} 
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ title: 'Главная' }}
       />
-      <Tab.Screen 
-        name="Events" 
-        component={EventListScreen} 
-        options={{ title: 'События' }} 
+
+      <Tab.Screen
+        name="Events"
+        component={EventListScreen}
+        options={{ title: 'События' }}
       />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen} 
-        options={{ title: 'Профиль' }} 
+
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: 'Профиль' }}
       />
     </Tab.Navigator>
   );
@@ -61,6 +64,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Auth" component={AuthScreen} />
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+        <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

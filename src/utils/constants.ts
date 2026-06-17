@@ -16,7 +16,7 @@ export const categories: EventCategory[] = [
   {
     id: 'theater',
     name: 'Театр',
-    icon: 'theater',
+    icon: 'theaters',
     color: '#C44536'
   },
   {
